@@ -3,7 +3,12 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 0); // Don't display errors in production
 
-// Set CORS headers (content type set per route)
+// Get request path first
+$request_uri = $_SERVER['REQUEST_URI'];
+$path = parse_url($request_uri, PHP_URL_PATH);
+
+// Set CORS headers and default content type for HTML
+header("Content-Type: text/html; charset=utf-8");
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
@@ -14,9 +19,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// Get request path
-$request_uri = $_SERVER['REQUEST_URI'];
-$path = parse_url($request_uri, PHP_URL_PATH);
 
 // Serve static files (built React app)  
 if (preg_match('/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/', $path)) {
@@ -80,6 +82,7 @@ if ($path === '/debug-files') {
 
 // API routing
 if (strpos($path, '/api/') === 0) {
+    header('Content-Type: application/json');
     // Remove /api prefix
     $api_path = substr($path, 4);
     $path_parts = explode('/', trim($api_path, '/'));
@@ -113,7 +116,6 @@ if (strpos($path, '/api/') === 0) {
 }
 
 // Serve React app for all other routes
-header('Content-Type: text/html; charset=utf-8');
 $indexPath = __DIR__ . '/index.html';
 if (file_exists($indexPath)) {
     $content = file_get_contents($indexPath);
