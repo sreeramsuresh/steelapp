@@ -61,22 +61,51 @@ if (strpos($path, '/api/') === 0) {
 // Serve React app for all other routes
 $indexPath = __DIR__ . '/index.html';
 if (file_exists($indexPath)) {
-    readfile($indexPath);
+    $content = file_get_contents($indexPath);
+    // Check if this is the built version (contains bundled assets)
+    if (strpos($content, '/src/main.jsx') !== false) {
+        // This is the development index.html, serve fallback
+        echo '<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Steel Trading App</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .loading { text-align: center; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="loading">
+            <h1>Steel Trading App</h1>
+            <p>Building your application... Please wait.</p>
+            <p>If this message persists, the build is still in progress.</p>
+        </div>
+    </div>
+</body>
+</html>';
+    } else {
+        // This is the built version
+        echo $content;
+    }
 } else {
     // Fallback HTML if build doesn't exist
     echo '<!DOCTYPE html>
-    <html>
-    <head>
-        <title>Steel Trading App</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body>
-        <div id="root">
-            <h1>Steel Trading App</h1>
-            <p>Application is starting...</p>
-        </div>
-    </body>
-    </html>';
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Steel Trading App</title>
+</head>
+<body>
+    <div id="root">
+        <h1>Steel Trading App</h1>
+        <p>Application is starting...</p>
+    </div>
+</body>
+</html>';
 }
 ?>

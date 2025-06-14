@@ -9,9 +9,14 @@ cmds = [
 
 [phases.build]
 cmds = [
+    'echo "Build phase starting..."',
+    'rm -f index.html index.php',
     'cp -r backend/* .',
     'cp -r dist/* .',
-    'ls -la'
+    'echo "Files after copy:"',
+    'ls -la',
+    'echo "Checking index.html content:"',
+    'head -n 5 index.html || echo "No index.html found"'
 ]
 
 [start]
