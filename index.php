@@ -21,7 +21,43 @@ $path = parse_url($request_uri, PHP_URL_PATH);
 
 // Serve static files (built React app)
 if (preg_match('/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/', $path)) {
-    return false; // Let PHP serve static files normally
+    $filePath = __DIR__ . $path;
+    if (file_exists($filePath)) {
+        // Set appropriate content type
+        $ext = pathinfo($filePath, PATHINFO_EXTENSION);
+        switch ($ext) {
+            case 'js':
+                header('Content-Type: application/javascript');
+                break;
+            case 'css':
+                header('Content-Type: text/css');
+                break;
+            case 'png':
+                header('Content-Type: image/png');
+                break;
+            case 'jpg':
+            case 'jpeg':
+                header('Content-Type: image/jpeg');
+                break;
+            case 'gif':
+                header('Content-Type: image/gif');
+                break;
+            case 'svg':
+                header('Content-Type: image/svg+xml');
+                break;
+            case 'ico':
+                header('Content-Type: image/x-icon');
+                break;
+            default:
+                header('Content-Type: application/octet-stream');
+        }
+        readfile($filePath);
+        exit;
+    } else {
+        http_response_code(404);
+        echo "File not found: $path";
+        exit;
+    }
 }
 
 // API routing
