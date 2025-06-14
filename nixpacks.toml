@@ -9,16 +9,10 @@ cmds = [
 [phases.build]
 cmds = [
     'npm run build',
-    'echo "Build completed, checking dist directory:"',
-    'ls -la dist/',
-    'echo "Copying backend files..."',
     'cp -r backend/* .',
-    'echo "Copying built React app..."',
-    'cp -rf dist/* .',
-    'echo "Final directory structure:"',
-    'ls -la',
-    'echo "Checking final index.html:"',
-    'head -n 10 index.html || echo "No index.html found"'
+    'cp -r dist/* .',
+    'echo "Final files:"',
+    'ls -la'
 ]
 
 [start]
