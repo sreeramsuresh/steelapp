@@ -15,7 +15,9 @@
       "Bash(node:*)",
       "Bash(npx eslint:*)",
       "Bash(php:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git config:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": []
   }
