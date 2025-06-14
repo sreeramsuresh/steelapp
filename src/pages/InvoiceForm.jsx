@@ -37,7 +37,7 @@ const InvoiceForm = ({ onSave, existingInvoice }) => {
       const response = await invoiceAPI.generateNumber();
       setInvoice(prev => ({
         ...prev,
-        invoiceNumber: response.data.invoiceNumber
+        invoiceNumber: response.invoice_number
       }));
     } catch (error) {
       console.error('Failed to generate invoice number:', error);
