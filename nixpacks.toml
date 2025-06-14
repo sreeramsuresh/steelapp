@@ -8,7 +8,9 @@ cmds = [
 
 [phases.build]
 cmds = [
+    'cp index.dev.html index.html',
     'npm run build',
+    'rm index.html',
     'cp -r backend/* .',
     'cp -r dist/* .',
     'echo "Final files:"',
