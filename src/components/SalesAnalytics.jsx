@@ -132,7 +132,7 @@ const SalesAnalytics = () => {
   }, []);
 
   // Calculate analytics based on selected period
-  const analytics = useMemo(() => {
+  const calculatedAnalytics = useMemo(() => {
     let startDate, endDate, previousStartDate, previousEndDate;
     
     if (dateRange === 'month') {
@@ -307,11 +307,11 @@ const SalesAnalytics = () => {
             <DollarSign size={24} className="metric-icon revenue" />
             <span className="metric-label">Total Revenue</span>
           </div>
-          <div className="metric-value">{formatCurrency(analytics.currentRevenue)}</div>
+          <div className="metric-value">{formatCurrency(calculatedAnalytics.currentRevenue)}</div>
           <div className="metric-growth">
-            {getGrowthIcon(analytics.revenueGrowth)}
-            <span className={`growth-text ${analytics.revenueGrowth > 0 ? 'positive' : analytics.revenueGrowth < 0 ? 'negative' : 'neutral'}`}>
-              {formatGrowth(analytics.revenueGrowth)} vs last {dateRange}
+            {getGrowthIcon(calculatedAnalytics.revenueGrowth)}
+            <span className={`growth-text ${calculatedAnalytics.revenueGrowth > 0 ? 'positive' : calculatedAnalytics.revenueGrowth < 0 ? 'negative' : 'neutral'}`}>
+              {formatGrowth(calculatedAnalytics.revenueGrowth)} vs last {dateRange}
             </span>
           </div>
         </div>
@@ -321,11 +321,11 @@ const SalesAnalytics = () => {
             <Package size={24} className="metric-icon orders" />
             <span className="metric-label">Total Orders</span>
           </div>
-          <div className="metric-value">{analytics.currentOrders}</div>
+          <div className="metric-value">{calculatedAnalytics.currentOrders}</div>
           <div className="metric-growth">
-            {getGrowthIcon(analytics.ordersGrowth)}
-            <span className={`growth-text ${analytics.ordersGrowth > 0 ? 'positive' : analytics.ordersGrowth < 0 ? 'negative' : 'neutral'}`}>
-              {formatGrowth(analytics.ordersGrowth)} vs last {dateRange}
+            {getGrowthIcon(calculatedAnalytics.ordersGrowth)}
+            <span className={`growth-text ${calculatedAnalytics.ordersGrowth > 0 ? 'positive' : calculatedAnalytics.ordersGrowth < 0 ? 'negative' : 'neutral'}`}>
+              {formatGrowth(calculatedAnalytics.ordersGrowth)} vs last {dateRange}
             </span>
           </div>
         </div>
@@ -335,11 +335,11 @@ const SalesAnalytics = () => {
             <Users size={24} className="metric-icon customers" />
             <span className="metric-label">Active Customers</span>
           </div>
-          <div className="metric-value">{analytics.uniqueCustomers}</div>
+          <div className="metric-value">{calculatedAnalytics.uniqueCustomers}</div>
           <div className="metric-growth">
-            {getGrowthIcon(analytics.customersGrowth)}
-            <span className={`growth-text ${analytics.customersGrowth > 0 ? 'positive' : analytics.customersGrowth < 0 ? 'negative' : 'neutral'}`}>
-              {formatGrowth(analytics.customersGrowth)} vs last {dateRange}
+            {getGrowthIcon(calculatedAnalytics.customersGrowth)}
+            <span className={`growth-text ${calculatedAnalytics.customersGrowth > 0 ? 'positive' : calculatedAnalytics.customersGrowth < 0 ? 'negative' : 'neutral'}`}>
+              {formatGrowth(calculatedAnalytics.customersGrowth)} vs last {dateRange}
             </span>
           </div>
         </div>
@@ -349,11 +349,11 @@ const SalesAnalytics = () => {
             <Target size={24} className="metric-icon avg-order" />
             <span className="metric-label">Avg Order Value</span>
           </div>
-          <div className="metric-value">{formatCurrency(analytics.avgOrderValue)}</div>
+          <div className="metric-value">{formatCurrency(calculatedAnalytics.avgOrderValue)}</div>
           <div className="metric-growth">
-            {getGrowthIcon(analytics.avgOrderGrowth)}
-            <span className={`growth-text ${analytics.avgOrderGrowth > 0 ? 'positive' : analytics.avgOrderGrowth < 0 ? 'negative' : 'neutral'}`}>
-              {formatGrowth(analytics.avgOrderGrowth)} vs last {dateRange}
+            {getGrowthIcon(calculatedAnalytics.avgOrderGrowth)}
+            <span className={`growth-text ${calculatedAnalytics.avgOrderGrowth > 0 ? 'positive' : calculatedAnalytics.avgOrderGrowth < 0 ? 'negative' : 'neutral'}`}>
+              {formatGrowth(calculatedAnalytics.avgOrderGrowth)} vs last {dateRange}
             </span>
           </div>
         </div>
@@ -363,12 +363,12 @@ const SalesAnalytics = () => {
         <div className="chart-card">
           <h3>Revenue Trend (Last 6 Months)</h3>
           <div className="revenue-chart">
-            {analytics.monthlyTrend.map((month, index) => (
+            {calculatedAnalytics.monthlyTrend.map((month, index) => (
               <div key={index} className="chart-bar">
                 <div 
                   className="bar-fill"
                   style={{ 
-                    height: `${(month.revenue / Math.max(...analytics.monthlyTrend.map(m => m.revenue))) * 100}%` 
+                    height: `${(month.revenue / Math.max(...calculatedAnalytics.monthlyTrend.map(m => m.revenue))) * 100}%` 
                   }}
                 />
                 <span className="bar-value">{formatCurrency(month.revenue).replace('₹', '₹')}</span>
@@ -381,7 +381,7 @@ const SalesAnalytics = () => {
         <div className="chart-card">
           <h3>Category Performance</h3>
           <div className="category-chart">
-            {Object.entries(analytics.categoryPerformance)
+            {Object.entries(calculatedAnalytics.categoryPerformance)
               .sort(([,a], [,b]) => b.revenue - a.revenue)
               .map(([category, data]) => (
                 <div key={category} className="category-item">
@@ -393,7 +393,7 @@ const SalesAnalytics = () => {
                     <div 
                       className="category-fill"
                       style={{ 
-                        width: `${(data.revenue / Math.max(...Object.values(analytics.categoryPerformance).map(c => c.revenue))) * 100}%` 
+                        width: `${(data.revenue / Math.max(...Object.values(calculatedAnalytics.categoryPerformance).map(c => c.revenue))) * 100}%` 
                       }}
                     />
                   </div>
@@ -426,28 +426,28 @@ const SalesAnalytics = () => {
               <div className="segment">
                 <span className="segment-label">High Value (₹5L+)</span>
                 <span className="segment-count">
-                  {analytics.topCustomers.filter(c => c.revenue >= 500000).length}
+                  {calculatedAnalytics.topCustomers.filter(c => c.revenue >= 500000).length}
                 </span>
                 <span className="segment-revenue">
-                  {formatCurrency(analytics.topCustomers.filter(c => c.revenue >= 500000).reduce((sum, c) => sum + c.revenue, 0))}
+                  {formatCurrency(calculatedAnalytics.topCustomers.filter(c => c.revenue >= 500000).reduce((sum, c) => sum + c.revenue, 0))}
                 </span>
               </div>
               <div className="segment">
                 <span className="segment-label">Medium Value (₹1L-5L)</span>
                 <span className="segment-count">
-                  {analytics.topCustomers.filter(c => c.revenue >= 100000 && c.revenue < 500000).length}
+                  {calculatedAnalytics.topCustomers.filter(c => c.revenue >= 100000 && c.revenue < 500000).length}
                 </span>
                 <span className="segment-revenue">
-                  {formatCurrency(analytics.topCustomers.filter(c => c.revenue >= 100000 && c.revenue < 500000).reduce((sum, c) => sum + c.revenue, 0))}
+                  {formatCurrency(calculatedAnalytics.topCustomers.filter(c => c.revenue >= 100000 && c.revenue < 500000).reduce((sum, c) => sum + c.revenue, 0))}
                 </span>
               </div>
               <div className="segment">
                 <span className="segment-label">Regular (₹1L)</span>
                 <span className="segment-count">
-                  {analytics.topCustomers.filter(c => c.revenue < 100000).length}
+                  {calculatedAnalytics.topCustomers.filter(c => c.revenue < 100000).length}
                 </span>
                 <span className="segment-revenue">
-                  {formatCurrency(analytics.topCustomers.filter(c => c.revenue < 100000).reduce((sum, c) => sum + c.revenue, 0))}
+                  {formatCurrency(calculatedAnalytics.topCustomers.filter(c => c.revenue < 100000).reduce((sum, c) => sum + c.revenue, 0))}
                 </span>
               </div>
             </div>
@@ -457,7 +457,7 @@ const SalesAnalytics = () => {
         <div className="top-customers">
           <h4>Top Customers by Revenue</h4>
           <div className="customers-list">
-            {analytics.topCustomers.map((customer, index) => (
+            {calculatedAnalytics.topCustomers.map((customer, index) => (
               <div key={customer.customer} className="customer-item">
                 <div className="customer-rank">
                   {index === 0 && <Award size={16} className="rank-gold" />}
@@ -486,7 +486,7 @@ const SalesAnalytics = () => {
                   <div 
                     className="progress-bar"
                     style={{ 
-                      width: `${(customer.revenue / analytics.topCustomers[0].revenue) * 100}%` 
+                      width: `${(customer.revenue / calculatedAnalytics.topCustomers[0].revenue) * 100}%` 
                     }}
                   />
                 </div>
@@ -505,7 +505,7 @@ const SalesAnalytics = () => {
           <div className="insights-list">
             <div className="insight-item">
               <CheckCircle size={16} className="insight-positive" />
-              <span>Top 3 customers generate {((analytics.topCustomers.slice(0, 3).reduce((sum, c) => sum + c.revenue, 0) / analytics.currentRevenue) * 100).toFixed(1)}% of total revenue</span>
+              <span>Top 3 customers generate {((calculatedAnalytics.topCustomers.slice(0, 3).reduce((sum, c) => sum + c.revenue, 0) / calculatedAnalytics.currentRevenue) * 100).toFixed(1)}% of total revenue</span>
             </div>
             <div className="insight-item">
               <AlertTriangle size={16} className="insight-warning" />
@@ -513,7 +513,7 @@ const SalesAnalytics = () => {
             </div>
             <div className="insight-item">
               <Target size={16} className="insight-info" />
-              <span>Average customer lifetime value: {formatCurrency(analytics.currentRevenue / analytics.uniqueCustomers)}</span>
+              <span>Average customer lifetime value: {formatCurrency(calculatedAnalytics.currentRevenue / calculatedAnalytics.uniqueCustomers)}</span>
             </div>
           </div>
         </div>
@@ -535,7 +535,7 @@ const SalesAnalytics = () => {
       </div>
 
       <div className="product-grid">
-        {analytics.topProducts.map((product, index) => (
+        {calculatedAnalytics.topProducts.map((product, index) => (
           <div key={product.product} className="product-card">
             <div className="product-header">
               <div className="product-rank">
@@ -570,12 +570,12 @@ const SalesAnalytics = () => {
             <div className="product-performance-bar">
               <div className="performance-label">
                 <span>Market Share</span>
-                <span>{((product.revenue / analytics.currentRevenue) * 100).toFixed(1)}%</span>
+                <span>{((product.revenue / calculatedAnalytics.currentRevenue) * 100).toFixed(1)}%</span>
               </div>
               <div className="performance-bar">
                 <div 
                   className="performance-fill"
-                  style={{ width: `${(product.revenue / analytics.topProducts[0].revenue) * 100}%` }}
+                  style={{ width: `${(product.revenue / calculatedAnalytics.topProducts[0].revenue) * 100}%` }}
                 />
               </div>
             </div>
@@ -588,18 +588,18 @@ const SalesAnalytics = () => {
           <div className="insight-card">
             <h4>Best Performing Category</h4>
             <div className="insight-content">
-              {Object.entries(analytics.categoryPerformance)
+              {Object.entries(calculatedAnalytics.categoryPerformance)
                 .sort(([,a], [,b]) => b.revenue - a.revenue)[0] && (
                 <>
                   <span className="insight-value">
-                    {Object.entries(analytics.categoryPerformance)
+                    {Object.entries(calculatedAnalytics.categoryPerformance)
                       .sort(([,a], [,b]) => b.revenue - a.revenue)[0][0]
                       .charAt(0).toUpperCase() + 
-                     Object.entries(analytics.categoryPerformance)
+                     Object.entries(calculatedAnalytics.categoryPerformance)
                       .sort(([,a], [,b]) => b.revenue - a.revenue)[0][0].slice(1)}
                   </span>
                   <span className="insight-detail">
-                    {formatCurrency(Object.entries(analytics.categoryPerformance)
+                    {formatCurrency(Object.entries(calculatedAnalytics.categoryPerformance)
                       .sort(([,a], [,b]) => b.revenue - a.revenue)[0][1].revenue)} revenue
                   </span>
                 </>
@@ -610,16 +610,16 @@ const SalesAnalytics = () => {
           <div className="insight-card">
             <h4>Most Popular Product</h4>
             <div className="insight-content">
-              <span className="insight-value">{analytics.topProducts[0]?.product}</span>
-              <span className="insight-detail">{analytics.topProducts[0]?.orders} orders</span>
+              <span className="insight-value">{calculatedAnalytics.topProducts[0]?.product}</span>
+              <span className="insight-detail">{calculatedAnalytics.topProducts[0]?.orders} orders</span>
             </div>
           </div>
           
           <div className="insight-card">
             <h4>Revenue Leader</h4>
             <div className="insight-content">
-              <span className="insight-value">{analytics.topProducts[0]?.product}</span>
-              <span className="insight-detail">{formatCurrency(analytics.topProducts[0]?.revenue)}</span>
+              <span className="insight-value">{calculatedAnalytics.topProducts[0]?.product}</span>
+              <span className="insight-detail">{formatCurrency(calculatedAnalytics.topProducts[0]?.revenue)}</span>
             </div>
           </div>
         </div>
@@ -665,10 +665,10 @@ const SalesAnalytics = () => {
             </div>
             <div className="summary-content">
               <span className="performance-text">
-                {analytics.revenueGrowth > 0 ? 'Above' : analytics.revenueGrowth < 0 ? 'Below' : 'On'} Target
+                {calculatedAnalytics.revenueGrowth > 0 ? 'Above' : calculatedAnalytics.revenueGrowth < 0 ? 'Below' : 'On'} Target
               </span>
               <span className="performance-detail">
-                {formatGrowth(analytics.revenueGrowth)} growth
+                {formatGrowth(calculatedAnalytics.revenueGrowth)} growth
               </span>
             </div>
           </div>
@@ -690,7 +690,7 @@ const SalesAnalytics = () => {
                 </tr>
               </thead>
               <tbody>
-                {Object.entries(analytics.categoryPerformance)
+                {Object.entries(calculatedAnalytics.categoryPerformance)
                   .sort(([,a], [,b]) => b.revenue - a.revenue)
                   .map(([category, data]) => (
                     <tr key={category}>
@@ -701,7 +701,7 @@ const SalesAnalytics = () => {
                       <td className="orders-cell">{data.orders}</td>
                       <td className="avg-cell">{formatCurrency(data.revenue / data.orders)}</td>
                       <td className="share-cell">
-                        {((data.revenue / analytics.currentRevenue) * 100).toFixed(1)}%
+                        {((data.revenue / calculatedAnalytics.currentRevenue) * 100).toFixed(1)}%
                       </td>
                     </tr>
                   ))}
@@ -724,8 +724,8 @@ const SalesAnalytics = () => {
                 </tr>
               </thead>
               <tbody>
-                {analytics.monthlyTrend.map((month, index) => {
-                  const previousMonth = analytics.monthlyTrend[index - 1];
+                {calculatedAnalytics.monthlyTrend.map((month, index) => {
+                  const previousMonth = calculatedAnalytics.monthlyTrend[index - 1];
                   const growth = previousMonth ? 
                     ((month.revenue - previousMonth.revenue) / previousMonth.revenue) * 100 : 0;
                   
