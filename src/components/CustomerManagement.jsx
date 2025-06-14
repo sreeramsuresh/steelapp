@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { customerAPI } from '../config/api';
 import { 
   Users, 
   Plus, 
@@ -51,56 +52,19 @@ const CustomerManagement = () => {
   });
 
   useEffect(() => {
-    const savedCustomers = localStorage.getItem('steel-app-customers');
-    if (savedCustomers) {
-      setCustomers(JSON.parse(savedCustomers));
-    } else {
-      const sampleCustomers = [
-        {
-          id: '1',
-          name: 'ABC Construction Ltd',
-          email: 'contact@abcconstruction.com',
-          phone: '+91-9876543210',
-          address: 'Mumbai, Maharashtra',
-          company: 'ABC Construction Ltd',
-          creditLimit: 500000,
-          currentCredit: 125000,
-          status: 'active',
-          createdAt: '2024-01-15',
-          contactHistory: [
-            {
-              id: '1',
-              type: 'call',
-              subject: 'Project Discussion',
-              notes: 'Discussed upcoming steel requirements for new project',
-              date: '2024-12-10',
-              createdAt: new Date().toISOString()
-            }
-          ]
-        },
-        {
-          id: '2',
-          name: 'XYZ Infrastructure',
-          email: 'orders@xyzinfra.com',
-          phone: '+91-9876543211',
-          address: 'Delhi, NCR',
-          company: 'XYZ Infrastructure Pvt Ltd',
-          creditLimit: 750000,
-          currentCredit: 0,
-          status: 'active',
-          createdAt: '2024-02-20',
-          contactHistory: []
-        }
-      ];
-      setCustomers(sampleCustomers);
-      localStorage.setItem('steel-app-customers', JSON.stringify(sampleCustomers));
-    }
+    loadCustomers();
   }, []);
 
-  const saveCustomersToStorage = (updatedCustomers) => {
-    setCustomers(updatedCustomers);
-    localStorage.setItem('steel-app-customers', JSON.stringify(updatedCustomers));
+  const loadCustomers = async () => {
+    try {
+      const response = await customerAPI.getAll();
+      setCustomers(response.data || []);
+    } catch (error) {
+      console.error('Failed to load customers:', error);
+      alert('Failed to load customers. Please try again.');
+    }
   };
+
 
   const filteredCustomers = customers.filter(customer => {
     const matchesSearch = customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -110,41 +74,51 @@ const CustomerManagement = () => {
     return matchesSearch && matchesFilter;
   });
 
-  const handleAddCustomer = () => {
-    const customer = {
-      ...newCustomer,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString().split('T')[0],
-      contactHistory: []
-    };
-    const updatedCustomers = [...customers, customer];
-    saveCustomersToStorage(updatedCustomers);
-    setNewCustomer({
-      name: '',
-      email: '',
-      phone: '',
-      address: '',
-      company: '',
-      creditLimit: 0,
-      currentCredit: 0,
-      status: 'active'
-    });
-    setShowAddModal(false);
+  const handleAddCustomer = async () => {
+    try {
+      await customerAPI.create(newCustomer);
+      await loadCustomers();
+      setNewCustomer({
+        name: '',
+        email: '',
+        phone: '',
+        address: '',
+        company: '',
+        creditLimit: 0,
+        currentCredit: 0,
+        status: 'active'
+      });
+      setShowAddModal(false);
+      alert('Customer added successfully!');
+    } catch (error) {
+      console.error('Failed to add customer:', error);
+      alert('Failed to add customer. Please try again.');
+    }
   };
 
-  const handleEditCustomer = () => {
-    const updatedCustomers = customers.map(customer =>
-      customer.id === selectedCustomer.id ? selectedCustomer : customer
-    );
-    saveCustomersToStorage(updatedCustomers);
-    setShowEditModal(false);
-    setSelectedCustomer(null);
+  const handleEditCustomer = async () => {
+    try {
+      await customerAPI.update(selectedCustomer.id, selectedCustomer);
+      await loadCustomers();
+      setShowEditModal(false);
+      setSelectedCustomer(null);
+      alert('Customer updated successfully!');
+    } catch (error) {
+      console.error('Failed to update customer:', error);
+      alert('Failed to update customer. Please try again.');
+    }
   };
 
-  const handleDeleteCustomer = (customerId) => {
+  const handleDeleteCustomer = async (customerId) => {
     if (window.confirm('Are you sure you want to delete this customer?')) {
-      const updatedCustomers = customers.filter(customer => customer.id !== customerId);
-      saveCustomersToStorage(updatedCustomers);
+      try {
+        await customerAPI.delete(customerId);
+        await loadCustomers();
+        alert('Customer deleted successfully!');
+      } catch (error) {
+        console.error('Failed to delete customer:', error);
+        alert('Failed to delete customer. Please try again.');
+      }
     }
   };
 
@@ -153,56 +127,57 @@ const CustomerManagement = () => {
     setShowContactHistory(true);
   };
 
-  const addContactEntry = () => {
-    const updatedCustomers = customers.map(customer => {
-      if (customer.id === contactHistoryCustomer.id) {
-        const newEntry = {
-          ...newContact,
-          id: Date.now().toString(),
-          createdAt: new Date().toISOString()
-        };
-        return {
-          ...customer,
-          contactHistory: [...(customer.contactHistory || []), newEntry]
-        };
-      }
-      return customer;
-    });
-    saveCustomersToStorage(updatedCustomers);
-    setContactHistoryCustomer(prev => ({
-      ...prev,
-      contactHistory: [...(prev.contactHistory || []), {
-        ...newContact,
-        id: Date.now().toString(),
-        createdAt: new Date().toISOString()
-      }]
-    }));
-    setNewContact({
-      type: 'call',
-      subject: '',
-      notes: '',
-      date: new Date().toISOString().split('T')[0]
-    });
+  const addContactEntry = async () => {
+    try {
+      const contactData = {
+        customer_id: contactHistoryCustomer.id,
+        ...newContact
+      };
+      await customerAPI.addContact(contactData);
+      
+      // Reload customer with updated contact history
+      const response = await customerAPI.getById(contactHistoryCustomer.id);
+      setContactHistoryCustomer(response.data);
+      
+      // Update the customers list
+      await loadCustomers();
+      
+      setNewContact({
+        type: 'call',
+        subject: '',
+        notes: '',
+        date: new Date().toISOString().split('T')[0]
+      });
+      alert('Contact entry added successfully!');
+    } catch (error) {
+      console.error('Failed to add contact entry:', error);
+      alert('Failed to add contact entry. Please try again.');
+    }
   };
 
-  const calculateAnalytics = () => {
-    const totalCustomers = customers.length;
-    const activeCustomers = customers.filter(c => c.status === 'active').length;
-    const totalCreditLimit = customers.reduce((sum, c) => sum + c.creditLimit, 0);
-    const totalCreditUsed = customers.reduce((sum, c) => sum + c.currentCredit, 0);
-    const avgCreditUtilization = totalCreditLimit > 0 ? (totalCreditUsed / totalCreditLimit) * 100 : 0;
-    
-    return {
-      totalCustomers,
-      activeCustomers,
-      totalCreditLimit,
-      totalCreditUsed,
-      availableCredit: totalCreditLimit - totalCreditUsed,
-      avgCreditUtilization
-    };
+  const [analytics, setAnalytics] = useState({
+    totalCustomers: 0,
+    activeCustomers: 0,
+    totalCreditLimit: 0,
+    totalCreditUsed: 0,
+    availableCredit: 0,
+    avgCreditUtilization: 0
+  });
+
+  const loadAnalytics = async () => {
+    try {
+      const response = await customerAPI.getAnalytics();
+      setAnalytics(response.data);
+    } catch (error) {
+      console.error('Failed to load analytics:', error);
+    }
   };
 
-  const analytics = calculateAnalytics();
+  useEffect(() => {
+    if (activeTab === 'analytics') {
+      loadAnalytics();
+    }
+  }, [activeTab]);
 
   const renderProfiles = () => (
     <div className="customer-profiles">
