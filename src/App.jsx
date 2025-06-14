@@ -4,6 +4,12 @@ import Sidebar from './components/Sidebar';
 import InvoiceForm from './pages/InvoiceForm';
 import InvoiceList from './pages/InvoiceList';
 import ComingSoon from './pages/ComingSoon';
+import CustomerManagement from './components/CustomerManagement';
+import SteelProducts from './components/SteelProducts';
+import PriceCalculator from './components/PriceCalculator';
+import SalesAnalytics from './components/SalesAnalytics';
+import CompanySettings from './components/CompanySettings';
+import RevenueTrends from './components/RevenueTrends';
 import './App.css';
 
 function App() {
@@ -59,12 +65,12 @@ function App() {
                 path="/drafts" 
                 element={<InvoiceList invoices={invoices.filter(inv => inv.status === 'draft')} />} 
               />
-              <Route path="/customers" element={<ComingSoon title="Customer Management" />} />
-              <Route path="/products" element={<ComingSoon title="Steel Products" />} />
-              <Route path="/calculator" element={<ComingSoon title="Price Calculator" />} />
-              <Route path="/analytics" element={<ComingSoon title="Sales Analytics" />} />
-              <Route path="/trends" element={<ComingSoon title="Revenue Trends" />} />
-              <Route path="/settings" element={<ComingSoon title="Company Settings" />} />
+              <Route path="/customers" element={<CustomerManagement />} />
+              <Route path="/products" element={<SteelProducts />} />
+              <Route path="/calculator" element={<PriceCalculator />} />
+              <Route path="/analytics" element={<SalesAnalytics />} />
+              <Route path="/trends" element={<RevenueTrends />} />
+              <Route path="/settings" element={<CompanySettings />} />
             </Routes>
           </main>
         </div>
