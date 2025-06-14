@@ -12,6 +12,7 @@ import CompanySettings from './components/CompanySettings';
 import RevenueTrends from './components/RevenueTrends';
 import ErrorBoundary from './components/ErrorBoundary';
 import { NotificationProvider, useNotification } from './components/NotificationSystem';
+// UAT Feedback only in UAT environment
 import UATFeedback from './components/UATFeedback';
 import { invoiceAPI } from './config/api';
 import './App.css';
@@ -113,6 +114,7 @@ function AppContent() {
             </Routes>
           </main>
         </div>
+        {/* UAT Feedback component only shows in UAT environment */}
         <UATFeedback />
       </div>
     </Router>
