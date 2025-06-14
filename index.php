@@ -1,0 +1,123 @@
+<?php
+// Production router for Railway deployment
+error_reporting(E_ALL);
+ini_set('display_errors', 0); // Don't display errors in production
+
+// Set content type and CORS headers
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+
+// Handle preflight requests
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
+// Get request path
+$request_uri = $_SERVER['REQUEST_URI'];
+$path = parse_url($request_uri, PHP_URL_PATH);
+
+// Serve static files (built React app)
+if (preg_match('/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/', $path)) {
+    // Try assets directory first
+    $filePath = __DIR__ . '/assets' . $path;
+    if (!file_exists($filePath)) {
+        $filePath = __DIR__ . $path;
+    }
+    
+    if (file_exists($filePath)) {
+        // Set appropriate content type
+        $ext = pathinfo($filePath, PATHINFO_EXTENSION);
+        switch ($ext) {
+            case 'js':
+                header('Content-Type: application/javascript');
+                break;
+            case 'css':
+                header('Content-Type: text/css');
+                break;
+            case 'png':
+                header('Content-Type: image/png');
+                break;
+            case 'jpg':
+            case 'jpeg':
+                header('Content-Type: image/jpeg');
+                break;
+            case 'gif':
+                header('Content-Type: image/gif');
+                break;
+            case 'svg':
+                header('Content-Type: image/svg+xml');
+                break;
+            case 'ico':
+                header('Content-Type: image/x-icon');
+                break;
+            default:
+                header('Content-Type: application/octet-stream');
+        }
+        readfile($filePath);
+        exit;
+    } else {
+        http_response_code(404);
+        echo "File not found: $path";
+        exit;
+    }
+}
+
+// API routing
+if (strpos($path, '/api/') === 0) {
+    header('Content-Type: application/json');
+    
+    // Remove /api prefix
+    $api_path = substr($path, 4);
+    $path_parts = explode('/', trim($api_path, '/'));
+    
+    if (empty($path_parts[0])) {
+        http_response_code(404);
+        echo json_encode(['error' => 'API endpoint not specified']);
+        exit;
+    }
+    
+    switch ($path_parts[0]) {
+        case 'customers':
+            echo json_encode([]);
+            break;
+        case 'products':
+            echo json_encode([]);
+            break;
+        case 'invoices':
+            if (isset($path_parts[1]) && $path_parts[1] === 'generate-number') {
+                echo json_encode(['invoice_number' => 'INV-' . date('Ymd') . '-' . rand(100, 999)]);
+            } else {
+                echo json_encode([]);
+            }
+            break;
+        default:
+            http_response_code(404);
+            echo json_encode(['error' => 'API endpoint not found']);
+            break;
+    }
+    exit;
+}
+
+// Serve React app for all other routes
+$indexPath = __DIR__ . '/index.html';
+if (file_exists($indexPath)) {
+    echo file_get_contents($indexPath);
+} else {
+    echo '<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Steel Trading App</title>
+</head>
+<body>
+    <div id="root">
+        <h1>Steel Trading App</h1>
+        <p>Application is starting...</p>
+    </div>
+</body>
+</html>';
+}
+?>
