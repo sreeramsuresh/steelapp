@@ -115,7 +115,27 @@ if (strpos($path, '/api/') === 0) {
 // Serve React app for all other routes
 $indexPath = __DIR__ . '/index.html';
 if (file_exists($indexPath)) {
-    readfile($indexPath);
+    $content = file_get_contents($indexPath);
+    // Add error handling script to debug React loading issues
+    $debugScript = '
+<script>
+console.log("React app loading...");
+window.onerror = function(msg, url, line, col, error) {
+    console.error("Global error:", msg, "at", url + ":" + line + ":" + col);
+    document.getElementById("root").innerHTML = "<div style=\"padding: 20px; background: #fee; border: 1px solid #fcc; margin: 20px; border-radius: 4px;\"><h2>JavaScript Error Detected</h2><p>" + msg + "</p><p>Check the browser console for more details.</p></div>";
+    return false;
+};
+setTimeout(function() {
+    var root = document.getElementById("root");
+    if (root && root.innerHTML.trim() === "") {
+        root.innerHTML = "<div style=\"padding: 20px; background: #fef3c7; border: 1px solid #f59e0b; margin: 20px; border-radius: 4px;\"><h2>React App Not Loading</h2><p>The React application failed to mount. Please check the browser console for errors.</p></div>";
+    }
+}, 5000);
+</script>';
+    
+    // Insert the debug script before the closing body tag
+    $content = str_replace('</body>', $debugScript . '</body>', $content);
+    echo $content;
 } else {
     echo '<!DOCTYPE html>
 <html lang="en">
