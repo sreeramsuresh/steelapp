@@ -3,20 +3,22 @@ nixPkgs = ['php82', 'nodejs-18_x']
 
 [phases.install]
 cmds = [
-    'npm install',
-    'npm run build'
+    'npm install'
 ]
 
 [phases.build]
 cmds = [
-    'echo "Build phase starting..."',
-    'rm -f index.html index.php',
+    'npm run build',
+    'echo "Build completed, checking dist directory:"',
+    'ls -la dist/',
+    'echo "Copying backend files..."',
     'cp -r backend/* .',
-    'cp -r dist/* .',
-    'echo "Files after copy:"',
+    'echo "Copying built React app..."',
+    'cp -rf dist/* .',
+    'echo "Final directory structure:"',
     'ls -la',
-    'echo "Checking index.html content:"',
-    'head -n 5 index.html || echo "No index.html found"'
+    'echo "Checking final index.html:"',
+    'head -n 10 index.html || echo "No index.html found"'
 ]
 
 [start]
