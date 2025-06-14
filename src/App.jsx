@@ -12,6 +12,7 @@ import CompanySettings from './components/CompanySettings';
 import RevenueTrends from './components/RevenueTrends';
 import ErrorBoundary from './components/ErrorBoundary';
 import { NotificationProvider, useNotification } from './components/NotificationSystem';
+import UATFeedback from './components/UATFeedback';
 import { invoiceAPI } from './config/api';
 import './App.css';
 
@@ -112,6 +113,7 @@ function AppContent() {
             </Routes>
           </main>
         </div>
+        <UATFeedback />
       </div>
     </Router>
   );
