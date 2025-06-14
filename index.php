@@ -60,6 +60,24 @@ if (preg_match('/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/', $pat
     }
 }
 
+// Debug endpoint to check available files
+if ($path === '/debug-files') {
+    header('Content-Type: text/plain');
+    echo "Files in root directory:\n";
+    foreach (glob('*') as $file) {
+        echo $file . "\n";
+    }
+    echo "\nFiles in assets directory:\n";
+    if (is_dir('assets')) {
+        foreach (glob('assets/*') as $file) {
+            echo $file . "\n";
+        }
+    } else {
+        echo "assets directory does not exist\n";
+    }
+    exit;
+}
+
 // API routing
 if (strpos($path, '/api/') === 0) {
     // Remove /api prefix
