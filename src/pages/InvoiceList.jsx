@@ -1,21 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Edit, Eye, Download, Trash2, Search, FileDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatCurrency, formatDate } from '../utils/invoiceUtils';
 import { generateInvoicePDF } from '../utils/pdfGenerator';
 import { createCompany } from '../types';
+import { invoiceAPI } from '../config/api';
 
-const InvoiceList = ({ invoices }) => {
+const InvoiceList = ({ invoices: propInvoices }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [downloadingIds, setDownloadingIds] = useState(new Set());
+  const [invoices, setInvoices] = useState(propInvoices || []);
 
   const company = createCompany();
 
+  useEffect(() => {
+    if (!propInvoices) {
+      loadInvoices();
+    } else {
+      setInvoices(propInvoices);
+    }
+  }, [propInvoices]);
+
+  const loadInvoices = async () => {
+    try {
+      const response = await invoiceAPI.getAll();
+      setInvoices(response.data || []);
+    } catch (error) {
+      console.error('Failed to load invoices:', error);
+      alert('Failed to load invoices. Please try again.');
+    }
+  };
+
   const filteredInvoices = invoices.filter(invoice => {
     const matchesSearch = 
-      invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.customer.name.toLowerCase().includes(searchTerm.toLowerCase());
+      (invoice.invoice_number || invoice.invoiceNumber || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (invoice.customer_name || invoice.customer?.name || '').toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || invoice.status === statusFilter;
     
@@ -72,6 +92,19 @@ const InvoiceList = ({ invoices }) => {
     }
     
     alert(`Downloaded ${filteredInvoices.length} invoice PDFs`);
+  };
+
+  const handleDeleteInvoice = async (invoiceId) => {
+    if (window.confirm('Are you sure you want to delete this invoice?')) {
+      try {
+        await invoiceAPI.delete(invoiceId);
+        await loadInvoices();
+        alert('Invoice deleted successfully!');
+      } catch (error) {
+        console.error('Failed to delete invoice:', error);
+        alert('Failed to delete invoice. Please try again.');
+      }
+    }
   };
 
   if (invoices.length === 0) {
@@ -148,13 +181,13 @@ const InvoiceList = ({ invoices }) => {
         
         {filteredInvoices.map((invoice) => (
           <div key={invoice.id} className="table-row">
-            <div className="invoice-number">{invoice.invoiceNumber}</div>
+            <div className="invoice-number">{invoice.invoice_number || invoice.invoiceNumber}</div>
             <div className="customer-info">
-              <div className="customer-name">{invoice.customer.name}</div>
-              <div className="customer-email">{invoice.customer.email}</div>
+              <div className="customer-name">{invoice.customer_name || invoice.customer?.name}</div>
+              <div className="customer-email">{invoice.customer_company || invoice.customer?.email}</div>
             </div>
-            <div>{formatDate(invoice.date)}</div>
-            <div>{formatDate(invoice.dueDate)}</div>
+            <div>{formatDate(invoice.invoice_date || invoice.date)}</div>
+            <div>{formatDate(invoice.due_date || invoice.dueDate)}</div>
             <div className="amount">{formatCurrency(invoice.total)}</div>
             <div>{getStatusBadge(invoice.status)}</div>
             <div className="actions">
@@ -187,7 +220,7 @@ const InvoiceList = ({ invoices }) => {
               <button 
                 className="action-btn danger"
                 title="Delete Invoice"
-                onClick={() => {/* TODO: Implement delete */}}
+                onClick={() => handleDeleteInvoice(invoice.id)}
               >
                 <Trash2 size={16} />
               </button>

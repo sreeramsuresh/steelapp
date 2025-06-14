@@ -1,8 +1,11 @@
 // API configuration for the Steel Trading application
 
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? '/backend/api'  // For cPanel deployment
-  : 'http://localhost/backend/api';  // For local development
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
+  (import.meta.env.MODE === 'production' ? '/backend/api' : 'http://localhost/backend/api');
+
+const API_TIMEOUT = import.meta.env.VITE_API_TIMEOUT || 30000;
+const APP_ENV = import.meta.env.VITE_APP_ENV || import.meta.env.MODE;
+const DEBUG = import.meta.env.VITE_APP_DEBUG === 'true';
 
 export const API_ENDPOINTS = {
   // Customer endpoints
@@ -28,25 +31,68 @@ export const API_ENDPOINTS = {
 export const api = {
   // Generic request function
   async request(url, options = {}) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+
     const config = {
       headers: {
         'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
         ...options.headers,
       },
+      signal: controller.signal,
       ...options,
     };
 
     try {
+      if (DEBUG) {
+        console.log(`API Request: ${options.method || 'GET'} ${url}`, options.body ? JSON.parse(options.body) : null);
+      }
+
       const response = await fetch(url, config);
-      const data = await response.json();
+      clearTimeout(timeoutId);
+      
+      // Handle different response types
+      let data;
+      const contentType = response.headers.get('content-type');
+      
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        data = { message: await response.text() };
+      }
       
       if (!response.ok) {
-        throw new Error(data.error || `HTTP error! status: ${response.status}`);
+        const error = new Error(data.error || data.message || `HTTP error! status: ${response.status}`);
+        error.status = response.status;
+        error.response = data;
+        throw error;
+      }
+
+      if (DEBUG) {
+        console.log(`API Response: ${response.status}`, data);
       }
       
       return data;
     } catch (error) {
-      console.error('API request failed:', error);
+      clearTimeout(timeoutId);
+      
+      if (error.name === 'AbortError') {
+        const timeoutError = new Error('Request timeout');
+        timeoutError.code = 'TIMEOUT';
+        throw timeoutError;
+      }
+
+      // Network or other errors
+      if (!error.status) {
+        error.code = 'NETWORK_ERROR';
+        error.message = 'Network error. Please check your connection.';
+      }
+
+      if (DEBUG) {
+        console.error('API request failed:', error);
+      }
+      
       throw error;
     }
   },

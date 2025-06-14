@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Steel App API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        .test-button:hover {
+            background: #2563eb;
+        }
+        .result {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success {
+            border-left: 4px solid #10b981;
+        }
+        .error {
+            border-left: 4px solid #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <h1>Steel Trading App - API Integration Test</h1>
+    
+    <div class="test-section">
+        <h2>API Configuration</h2>
+        <p>Testing connection to: <span id="api-base"></span></p>
+        <button class="test-button" onclick="testApiConnection()">Test API Connection</button>
+        <div id="connection-result" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Customer API Tests</h2>
+        <button class="test-button" onclick="testCustomersAPI()">Get All Customers</button>
+        <button class="test-button" onclick="testCustomerAnalytics()">Get Customer Analytics</button>
+        <div id="customers-result" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Products API Tests</h2>
+        <button class="test-button" onclick="testProductsAPI()">Get All Products</button>
+        <button class="test-button" onclick="testProductAnalytics()">Get Product Analytics</button>
+        <div id="products-result" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Invoices API Tests</h2>
+        <button class="test-button" onclick="testInvoicesAPI()">Get All Invoices</button>
+        <button class="test-button" onclick="testInvoiceAnalytics()">Get Invoice Analytics</button>
+        <button class="test-button" onclick="testRevenueTrends()">Get Revenue Trends</button>
+        <div id="invoices-result" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_BASE_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost/backend/api'
+            : '/backend/api';
+        
+        document.getElementById('api-base').textContent = API_BASE_URL;
+
+        // API utility function
+        async function apiRequest(endpoint, options = {}) {
+            const url = `${API_BASE_URL}${endpoint}`;
+            const config = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers,
+                },
+                ...options,
+            };
+
+            try {
+                console.log(`Making request to: ${url}`);
+                const response = await fetch(url, config);
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || `HTTP error! status: ${response.status}`);
+                }
+                
+                return { success: true, data };
+            } catch (error) {
+                console.error('API request failed:', error);
+                return { success: false, error: error.message };
+            }
+        }
+
+        // Display result helper
+        function displayResult(elementId, result) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            
+            if (result.success) {
+                element.className = 'result success';
+                element.textContent = `SUCCESS:\n${JSON.stringify(result.data, null, 2)}`;
+            } else {
+                element.className = 'result error';
+                element.textContent = `ERROR:\n${result.error}`;
+            }
+        }
+
+        // Test functions
+        async function testApiConnection() {
+            const result = await apiRequest('/customers');
+            displayResult('connection-result', result);
+        }
+
+        async function testCustomersAPI() {
+            const result = await apiRequest('/customers');
+            displayResult('customers-result', result);
+        }
+
+        async function testCustomerAnalytics() {
+            const result = await apiRequest('/customers/analytics');
+            displayResult('customers-result', result);
+        }
+
+        async function testProductsAPI() {
+            const result = await apiRequest('/products');
+            displayResult('products-result', result);
+        }
+
+        async function testProductAnalytics() {
+            const result = await apiRequest('/products/analytics');
+            displayResult('products-result', result);
+        }
+
+        async function testInvoicesAPI() {
+            const result = await apiRequest('/invoices');
+            displayResult('invoices-result', result);
+        }
+
+        async function testInvoiceAnalytics() {
+            const result = await apiRequest('/invoices/analytics');
+            displayResult('invoices-result', result);
+        }
+
+        async function testRevenueTrends() {
+            const result = await apiRequest('/invoices/revenue-trends');
+            displayResult('invoices-result', result);
+        }
+
+        // Auto-test connection on load
+        window.addEventListener('load', () => {
+            console.log('API Test page loaded');
+            console.log('API Base URL:', API_BASE_URL);
+        });
+    </script>
+</body>
+</html>

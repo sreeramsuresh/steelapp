@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { invoiceAPI } from '../config/api';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -28,12 +29,41 @@ const SalesAnalytics = () => {
   const [selectedPeriod, setSelectedPeriod] = useState(new Date());
   const [salesData, setSalesData] = useState([]);
   const [invoiceData, setInvoiceData] = useState([]);
+  const [analytics, setAnalytics] = useState({
+    totalInvoices: 0,
+    monthlyRevenue: 0,
+    pendingInvoices: 0,
+    totalRevenue: 0
+  });
 
-  // Generate sample sales data
   useEffect(() => {
-    // Load invoice data from existing invoices
-    const existingInvoices = JSON.parse(localStorage.getItem('steel-app-invoices') || '[]');
-    setInvoiceData(existingInvoices);
+    loadAnalytics();
+    loadInvoiceData();
+  }, []);
+
+  const loadAnalytics = async () => {
+    try {
+      const response = await invoiceAPI.getAnalytics();
+      setAnalytics(response.data);
+    } catch (error) {
+      console.error('Failed to load analytics:', error);
+    }
+  };
+
+  const loadInvoiceData = async () => {
+    try {
+      const response = await invoiceAPI.getAll();
+      setInvoiceData(response.data || []);
+    } catch (error) {
+      console.error('Failed to load invoice data:', error);
+      // Fallback to local storage if API fails
+      const existingInvoices = JSON.parse(localStorage.getItem('steel-app-invoices') || '[]');
+      setInvoiceData(existingInvoices);
+    }
+  };
+
+  // Generate sample sales data for enhanced analytics
+  useEffect(() => {
 
     // Generate comprehensive sales data for analytics
     const generateSalesData = () => {

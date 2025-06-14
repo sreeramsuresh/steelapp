@@ -1,5 +1,10 @@
 <?php
 require_once '../config/database.php';
+require_once '../config/security.php';
+require_once '../config/validator.php';
+
+// Initialize security checks
+Security::init();
 
 enableCors();
 
@@ -111,6 +116,13 @@ function createCustomer($db) {
     try {
         $input = json_decode(file_get_contents('php://input'), true);
         
+        // Validate input data
+        $validation = Validator::validateCustomer($input);
+        if (!$validation['valid']) {
+            sendError('Validation failed: ' . implode(', ', $validation['errors']), 400);
+            return;
+        }
+        
         $query = "INSERT INTO customers 
                   (name, email, phone, street, city, state, zip_code, company, 
                    credit_limit, current_credit, status, gst_number) 
@@ -133,9 +145,14 @@ function createCustomer($db) {
         ]);
         
         $customer_id = $db->lastInsertId();
+        
+        // Log security event
+        Security::logSecurityEvent('customer_created', ['customer_id' => $customer_id]);
+        
         sendSuccess(['id' => $customer_id], 'Customer created successfully');
         
     } catch (Exception $e) {
+        Security::logSecurityEvent('customer_creation_failed', ['error' => $e->getMessage()]);
         sendError('Failed to create customer: ' . $e->getMessage(), 500);
     }
 }
@@ -143,6 +160,19 @@ function createCustomer($db) {
 function updateCustomer($db, $id) {
     try {
         $input = json_decode(file_get_contents('php://input'), true);
+        
+        // Validate input data
+        $validation = Validator::validateCustomer($input);
+        if (!$validation['valid']) {
+            sendError('Validation failed: ' . implode(', ', $validation['errors']), 400);
+            return;
+        }
+        
+        // Validate ID
+        if (!Validator::validatePositiveInteger($id)) {
+            sendError('Invalid customer ID', 400);
+            return;
+        }
         
         $query = "UPDATE customers SET 
                   name = ?, email = ?, phone = ?, street = ?, city = ?, state = ?, 
@@ -167,9 +197,13 @@ function updateCustomer($db, $id) {
             $id
         ]);
         
+        // Log security event
+        Security::logSecurityEvent('customer_updated', ['customer_id' => $id]);
+        
         sendSuccess(null, 'Customer updated successfully');
         
     } catch (Exception $e) {
+        Security::logSecurityEvent('customer_update_failed', ['customer_id' => $id, 'error' => $e->getMessage()]);
         sendError('Failed to update customer: ' . $e->getMessage(), 500);
     }
 }

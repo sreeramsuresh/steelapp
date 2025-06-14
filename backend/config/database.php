@@ -1,27 +1,63 @@
 <?php
+require_once __DIR__ . '/env.php';
+
 class Database {
-    private $host = 'localhost';
-    private $db_name = 'steel_app';
-    private $username = 'steel_user';
-    private $password = 'steel_password';
+    private $host;
+    private $db_name;
+    private $username;
+    private $password;
+    private $charset;
+    private $port;
     private $conn;
+    
+    public function __construct() {
+        // Load environment configuration
+        Env::load();
+        
+        // Validate required database variables
+        Env::validateRequired(['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASS']);
+        
+        $this->host = Env::get('DB_HOST');
+        $this->db_name = Env::get('DB_NAME');
+        $this->username = Env::get('DB_USER');
+        $this->password = Env::get('DB_PASS');
+        $this->charset = Env::get('DB_CHARSET', 'utf8mb4');
+        $this->port = Env::get('DB_PORT', 3306);
+    }
 
     public function getConnection() {
-        $this->conn = null;
+        if ($this->conn !== null) {
+            return $this->conn;
+        }
         
         try {
-            $this->conn = new PDO(
-                "mysql:host=" . $this->host . ";dbname=" . $this->db_name,
-                $this->username,
-                $this->password,
-                array(
-                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                    PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8"
-                )
-            );
+            $dsn = "mysql:host={$this->host};port={$this->port};dbname={$this->db_name};charset={$this->charset}";
+            
+            $options = [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES => false,
+                PDO::ATTR_PERSISTENT => false,
+                PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES {$this->charset} COLLATE {$this->charset}_unicode_ci"
+            ];
+            
+            $this->conn = new PDO($dsn, $this->username, $this->password, $options);
+            
+            // Log successful connection in development
+            if (Env::get('APP_DEBUG', false)) {
+                error_log("Database connection established successfully");
+            }
+            
         } catch(PDOException $exception) {
-            echo "Connection error: " . $exception->getMessage();
+            // Log error securely without exposing sensitive information
+            error_log("Database connection failed: " . $exception->getMessage());
+            
+            // Don't expose database details in production
+            if (Env::get('APP_ENV') === 'development') {
+                throw new Exception("Database connection failed: " . $exception->getMessage());
+            } else {
+                throw new Exception("Database connection failed. Please try again later.");
+            }
         }
         
         return $this->conn;
@@ -32,21 +68,51 @@ class Database {
     }
 }
 
-// Enable CORS for frontend
+// Secure CORS configuration
 function enableCors() {
+    // Load environment configuration
+    Env::load();
+    
+    // Get allowed origins from environment
+    $allowedOrigins = Env::get('CORS_ORIGINS', ['http://localhost:3030']);
+    $allowedMethods = Env::get('CORS_METHODS', ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']);
+    $allowedHeaders = Env::get('CORS_HEADERS', ['Content-Type', 'Authorization', 'X-Requested-With']);
+    
+    // Security headers
+    header('X-Content-Type-Options: nosniff');
+    header('X-Frame-Options: DENY');
+    header('X-XSS-Protection: 1; mode=block');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+    
+    // HSTS in production
+    if (Env::get('ENABLE_HSTS', false) && Env::get('APP_ENV') === 'production') {
+        header('Strict-Transport-Security: max-age=31536000; includeSubDomains; preload');
+    }
+    
+    // Content Security Policy
+    if (Env::get('ENABLE_CSP', false)) {
+        header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:;");
+    }
+    
+    // Handle CORS
     if (isset($_SERVER['HTTP_ORIGIN'])) {
-        header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
-        header('Access-Control-Allow-Credentials: true');
-        header('Access-Control-Max-Age: 86400');
+        $origin = $_SERVER['HTTP_ORIGIN'];
+        
+        // Check if origin is allowed
+        if (in_array($origin, $allowedOrigins) || in_array('*', $allowedOrigins)) {
+            header("Access-Control-Allow-Origin: {$origin}");
+            header('Access-Control-Allow-Credentials: true');
+            header('Access-Control-Max-Age: 86400');
+        } else {
+            // Log unauthorized origin attempt
+            error_log("Unauthorized CORS origin attempted: {$origin}");
+        }
     }
 
     if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-        if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']))
-            header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-        
-        if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']))
-            header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
-        
+        header("Access-Control-Allow-Methods: " . implode(', ', $allowedMethods));
+        header("Access-Control-Allow-Headers: " . implode(', ', $allowedHeaders));
+        http_response_code(200);
         exit(0);
     }
 }

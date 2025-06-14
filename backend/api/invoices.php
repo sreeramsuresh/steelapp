@@ -1,5 +1,10 @@
 <?php
 require_once '../config/database.php';
+require_once '../config/security.php';
+require_once '../config/validator.php';
+
+// Initialize security checks
+Security::init();
 
 enableCors();
 

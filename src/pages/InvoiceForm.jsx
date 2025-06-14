@@ -11,6 +11,7 @@ import {
 } from '../utils/invoiceUtils';
 import { generateInvoicePDF } from '../utils/pdfGenerator';
 import InvoicePreview from '../components/InvoicePreview';
+import { invoiceAPI } from '../config/api';
 
 const InvoiceForm = ({ onSave, existingInvoice }) => {
   const [showPreview, setShowPreview] = useState(false);
@@ -21,9 +22,32 @@ const InvoiceForm = ({ onSave, existingInvoice }) => {
     }
     
     const newInvoice = createInvoice();
-    newInvoice.invoiceNumber = generateInvoiceNumber();
     return newInvoice;
   });
+
+  // Generate invoice number when component mounts
+  useEffect(() => {
+    if (!existingInvoice) {
+      generateNewInvoiceNumber();
+    }
+  }, [existingInvoice]);
+
+  const generateNewInvoiceNumber = async () => {
+    try {
+      const response = await invoiceAPI.generateNumber();
+      setInvoice(prev => ({
+        ...prev,
+        invoiceNumber: response.data.invoiceNumber
+      }));
+    } catch (error) {
+      console.error('Failed to generate invoice number:', error);
+      // Fallback to local generation
+      setInvoice(prev => ({
+        ...prev,
+        invoiceNumber: generateInvoiceNumber()
+      }));
+    }
+  };
 
   const [company] = useState(createCompany());
 
@@ -97,9 +121,22 @@ const InvoiceForm = ({ onSave, existingInvoice }) => {
     }));
   };
 
-  const handleSave = () => {
-    onSave(invoice);
-    alert('Invoice saved successfully!');
+  const handleSave = async () => {
+    try {
+      if (existingInvoice) {
+        await invoiceAPI.update(existingInvoice.id, invoice);
+        alert('Invoice updated successfully!');
+      } else {
+        await invoiceAPI.create(invoice);
+        alert('Invoice created successfully!');
+      }
+      if (onSave) {
+        onSave(invoice);
+      }
+    } catch (error) {
+      console.error('Failed to save invoice:', error);
+      alert('Failed to save invoice. Please try again.');
+    }
   };
 
   const handleDownloadPDF = async () => {

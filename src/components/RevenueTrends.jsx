@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { invoiceAPI } from '../config/api';
 import { 
   TrendingUp,
   TrendingDown,
@@ -30,6 +31,20 @@ const RevenueTrends = () => {
   const [showPredictions, setShowPredictions] = useState(true);
   const [revenueData, setRevenueData] = useState([]);
   const [forecastData, setForecastData] = useState([]);
+  const [apiTrends, setApiTrends] = useState([]);
+
+  useEffect(() => {
+    loadRevenueTrends();
+  }, []);
+
+  const loadRevenueTrends = async () => {
+    try {
+      const response = await invoiceAPI.getRevenueTrends();
+      setApiTrends(response.data || []);
+    } catch (error) {
+      console.error('Failed to load revenue trends:', error);
+    }
+  };
 
   // Generate comprehensive revenue data
   useEffect(() => {

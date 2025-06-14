@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { productAPI } from '../config/api';
 import { 
   Package, 
   Plus, 
@@ -90,121 +91,29 @@ const SteelProducts = () => {
   ];
 
   useEffect(() => {
-    const savedProducts = localStorage.getItem('steel-app-products');
-    if (savedProducts) {
-      setProducts(JSON.parse(savedProducts));
-    } else {
-      const sampleProducts = [
-        {
-          id: '1',
-          name: 'TMT Rebar 12mm',
-          category: 'rebar',
-          grade: 'Fe415',
-          size: '12mm',
-          weight: '0.888',
-          unit: 'kg/m',
-          description: 'High strength TMT rebar for construction',
-          currentStock: 500,
-          minStock: 100,
-          maxStock: 2000,
-          costPrice: 45,
-          sellingPrice: 52,
-          supplier: 'Steel Corp India',
-          location: 'Warehouse A',
-          createdAt: '2024-01-15',
-          lastUpdated: '2024-12-10',
-          priceHistory: [
-            { date: '2024-12-10', price: 52, reason: 'Market adjustment', updatedBy: 'Admin' },
-            { date: '2024-11-15', price: 50, reason: 'Seasonal pricing', updatedBy: 'Admin' }
-          ],
-          specifications: {
-            length: '12m',
-            width: '',
-            thickness: '',
-            diameter: '12mm',
-            tensileStrength: '500 MPa',
-            yieldStrength: '415 MPa',
-            carbonContent: '0.25%',
-            coating: 'TMT',
-            standard: 'IS1786:2008'
-          }
-        },
-        {
-          id: '2',
-          name: 'MS Angle 50x50x6',
-          category: 'angle',
-          grade: 'MS',
-          size: '50x50x6',
-          weight: '4.5',
-          unit: 'kg/m',
-          description: 'Mild steel angle for structural applications',
-          currentStock: 150,
-          minStock: 50,
-          maxStock: 500,
-          costPrice: 55,
-          sellingPrice: 63,
-          supplier: 'Bharat Steel',
-          location: 'Warehouse B',
-          createdAt: '2024-02-20',
-          lastUpdated: '2024-12-08',
-          priceHistory: [
-            { date: '2024-12-08', price: 63, reason: 'Raw material cost increase', updatedBy: 'Admin' }
-          ],
-          specifications: {
-            length: '6m',
-            width: '50mm',
-            thickness: '6mm',
-            diameter: '',
-            tensileStrength: '410 MPa',
-            yieldStrength: '250 MPa',
-            carbonContent: '0.23%',
-            coating: 'None',
-            standard: 'IS2062:2011'
-          }
-        },
-        {
-          id: '3',
-          name: 'Steel Sheet 2mm',
-          category: 'sheet',
-          grade: 'IS2062',
-          size: '1200x2400',
-          weight: '45.2',
-          unit: 'kg/sheet',
-          description: 'Cold rolled steel sheet',
-          currentStock: 25,
-          minStock: 10,
-          maxStock: 100,
-          costPrice: 2800,
-          sellingPrice: 3200,
-          supplier: 'Sheet Metal Works',
-          location: 'Warehouse C',
-          createdAt: '2024-03-10',
-          lastUpdated: '2024-12-05',
-          priceHistory: [
-            { date: '2024-12-05', price: 3200, reason: 'Standard pricing', updatedBy: 'Admin' }
-          ],
-          specifications: {
-            length: '2400mm',
-            width: '1200mm',
-            thickness: '2mm',
-            diameter: '',
-            tensileStrength: '410 MPa',
-            yieldStrength: '240 MPa',
-            carbonContent: '0.22%',
-            coating: 'Oiled',
-            standard: 'IS2062:2011'
-          }
-        }
-      ];
-      setProducts(sampleProducts);
-      localStorage.setItem('steel-app-products', JSON.stringify(sampleProducts));
-    }
+    loadProducts();
+    loadCategories();
   }, []);
 
-  const saveProductsToStorage = (updatedProducts) => {
-    setProducts(updatedProducts);
-    localStorage.setItem('steel-app-products', JSON.stringify(updatedProducts));
+  const loadProducts = async () => {
+    try {
+      const response = await productAPI.getAll();
+      setProducts(response.data || []);
+    } catch (error) {
+      console.error('Failed to load products:', error);
+      alert('Failed to load products. Please try again.');
+    }
   };
+
+  const loadCategories = async () => {
+    try {
+      const response = await productAPI.getCategories();
+      setCategories(response.data || categories);
+    } catch (error) {
+      console.error('Failed to load categories:', error);
+    }
+  };
+
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -218,86 +127,83 @@ const SteelProducts = () => {
     return matchesSearch && matchesCategory && matchesStock;
   });
 
-  const handleAddProduct = () => {
-    const product = {
-      ...newProduct,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString().split('T')[0],
-      lastUpdated: new Date().toISOString().split('T')[0],
-      priceHistory: [{
-        date: new Date().toISOString().split('T')[0],
-        price: newProduct.sellingPrice,
-        reason: 'Initial price',
-        updatedBy: 'Admin'
-      }]
-    };
-    const updatedProducts = [...products, product];
-    saveProductsToStorage(updatedProducts);
-    setNewProduct({
-      name: '',
-      category: 'rebar',
-      grade: '',
-      size: '',
-      weight: '',
-      unit: 'kg',
-      description: '',
-      currentStock: 0,
-      minStock: 10,
-      maxStock: 1000,
-      costPrice: 0,
-      sellingPrice: 0,
-      supplier: '',
-      location: '',
-      specifications: {
-        length: '', width: '', thickness: '', diameter: '',
-        tensileStrength: '', yieldStrength: '', carbonContent: '',
-        coating: '', standard: ''
-      }
-    });
-    setShowAddModal(false);
-  };
-
-  const handleEditProduct = () => {
-    const updatedProducts = products.map(product =>
-      product.id === selectedProduct.id ? {
-        ...selectedProduct,
-        lastUpdated: new Date().toISOString().split('T')[0]
-      } : product
-    );
-    saveProductsToStorage(updatedProducts);
-    setShowEditModal(false);
-    setSelectedProduct(null);
-  };
-
-  const handleDeleteProduct = (productId) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
-      const updatedProducts = products.filter(product => product.id !== productId);
-      saveProductsToStorage(updatedProducts);
+  const handleAddProduct = async () => {
+    try {
+      await productAPI.create(newProduct);
+      await loadProducts();
+      setNewProduct({
+        name: '',
+        category: 'rebar',
+        grade: '',
+        size: '',
+        weight: '',
+        unit: 'kg',
+        description: '',
+        currentStock: 0,
+        minStock: 10,
+        maxStock: 1000,
+        costPrice: 0,
+        sellingPrice: 0,
+        supplier: '',
+        location: '',
+        specifications: {
+          length: '', width: '', thickness: '', diameter: '',
+          tensileStrength: '', yieldStrength: '', carbonContent: '',
+          coating: '', standard: ''
+        }
+      });
+      setShowAddModal(false);
+      alert('Product added successfully!');
+    } catch (error) {
+      console.error('Failed to add product:', error);
+      alert('Failed to add product. Please try again.');
     }
   };
 
-  const handlePriceUpdate = () => {
-    const updatedProducts = products.map(product => {
-      if (product.id === selectedProduct.id) {
-        const newPriceEntry = {
-          date: priceUpdate.effectiveDate,
-          price: priceUpdate.newPrice,
-          reason: priceUpdate.reason,
-          updatedBy: 'Admin'
-        };
-        return {
-          ...product,
-          sellingPrice: priceUpdate.newPrice,
-          lastUpdated: new Date().toISOString().split('T')[0],
-          priceHistory: [newPriceEntry, ...(product.priceHistory || [])]
-        };
+  const handleEditProduct = async () => {
+    try {
+      await productAPI.update(selectedProduct.id, selectedProduct);
+      await loadProducts();
+      setShowEditModal(false);
+      setSelectedProduct(null);
+      alert('Product updated successfully!');
+    } catch (error) {
+      console.error('Failed to update product:', error);
+      alert('Failed to update product. Please try again.');
+    }
+  };
+
+  const handleDeleteProduct = async (productId) => {
+    if (window.confirm('Are you sure you want to delete this product?')) {
+      try {
+        await productAPI.delete(productId);
+        await loadProducts();
+        alert('Product deleted successfully!');
+      } catch (error) {
+        console.error('Failed to delete product:', error);
+        alert('Failed to delete product. Please try again.');
       }
-      return product;
-    });
-    saveProductsToStorage(updatedProducts);
-    setPriceUpdate({ newPrice: 0, reason: '', effectiveDate: new Date().toISOString().split('T')[0] });
-    setShowPriceModal(false);
-    setSelectedProduct(null);
+    }
+  };
+
+  const handlePriceUpdate = async () => {
+    try {
+      const priceUpdateData = {
+        productId: selectedProduct.id,
+        newPrice: priceUpdate.newPrice,
+        reason: priceUpdate.reason,
+        effectiveDate: priceUpdate.effectiveDate
+      };
+      await productAPI.updatePrice(priceUpdateData);
+      await loadProducts();
+      setPriceUpdate({ newPrice: 0, reason: '', effectiveDate: new Date().toISOString().split('T')[0] });
+      setShowPriceModal(false);
+      setSelectedProduct(null);
+      alert('Product price updated successfully!');
+    } catch (error) {
+      console.error('Failed to update product price:', error);
+      alert('Failed to update product price. Please try again.');
+    }
   };
 
   const getStockStatus = (product) => {
@@ -314,16 +220,27 @@ const SteelProducts = () => {
     }
   };
 
-  const calculateInventoryStats = () => {
-    const totalProducts = products.length;
-    const lowStockProducts = products.filter(p => getStockStatus(p) === 'low').length;
-    const totalValue = products.reduce((sum, p) => sum + (p.currentStock * p.costPrice), 0);
-    const totalStock = products.reduce((sum, p) => sum + p.currentStock, 0);
-    
-    return { totalProducts, lowStockProducts, totalValue, totalStock };
+  const [stats, setStats] = useState({
+    totalProducts: 0,
+    lowStockProducts: 0,
+    totalValue: 0,
+    totalStock: 0
+  });
+
+  const loadInventoryStats = async () => {
+    try {
+      const response = await productAPI.getAnalytics();
+      setStats(response.data);
+    } catch (error) {
+      console.error('Failed to load inventory stats:', error);
+    }
   };
 
-  const stats = calculateInventoryStats();
+  useEffect(() => {
+    if (activeTab === 'inventory') {
+      loadInventoryStats();
+    }
+  }, [activeTab]);
 
   const renderCatalog = () => (
     <div className="products-catalog">
