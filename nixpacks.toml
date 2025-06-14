@@ -9,8 +9,9 @@ cmds = [
 
 [phases.build]
 cmds = [
+    'cp -r backend/* .',
     'cp -r dist/* .',
-    'cp -r backend/* .'
+    'ls -la'
 ]
 
 [start]
