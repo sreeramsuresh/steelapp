@@ -129,7 +129,7 @@ class Security {
 
         // Check request size
         $maxSize = (int)Env::get('MAX_UPLOAD_SIZE', 10485760); // 10MB default
-        if ($_SERVER['CONTENT_LENGTH'] > $maxSize) {
+        if (isset($_SERVER['CONTENT_LENGTH']) && $_SERVER['CONTENT_LENGTH'] > $maxSize) {
             http_response_code(413);
             echo json_encode(['error' => 'Request entity too large']);
             exit;
@@ -138,7 +138,7 @@ class Security {
         // Check for suspicious patterns
         $suspiciousPatterns = [
             '/\b(union|select|insert|update|delete|drop|create|alter)\b/i',
-            '/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi',
+            '/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/i',
             '/javascript:/i',
             '/on\w+\s*=/i'
         ];
