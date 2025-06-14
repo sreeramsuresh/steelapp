@@ -1,0 +1,17 @@
+[phases.setup]
+nixPkgs = ['php82', 'php82Packages.composer', 'nodejs-18_x', 'npm']
+
+[phases.install]
+cmds = [
+    'npm install',
+    'npm run build'
+]
+
+[phases.build]
+cmds = [
+    'cp -r dist/* .',
+    'cp -r backend/* .'
+]
+
+[start]
+cmd = 'php -S 0.0.0.0:$PORT -t .'
